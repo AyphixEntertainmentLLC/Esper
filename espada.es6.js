@@ -71,10 +71,24 @@ class Page {
 			
 			var src = null;
 			
-			switch(type.toLowerCase()) {
+			switch(type.toLowerCase().replace(" ", "")) {
+				case "python":
+				case "ruby":
+				case "jscript":
+				case "javascript":
+				case "js":
 				case "script":
 					src = $this.attr("src");
 					$this.replaceWith("<script src='"+src+"'></script>");
+					break;
+				case "css1":
+				case "css2":
+				case "css3":
+				case "stylesheet":
+				case "style":
+				case "css":
+					src = $this.attr("src");
+					$this.replaceWith("<link rel='stylesheet' href='"+src+"'>");
 					break;
 			}
 		});
