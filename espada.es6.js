@@ -94,16 +94,25 @@ class Page {
 		});
 	}
 	
+	generate_hooks() {
+		$("a").click(function() {
+			$this = $(this);
+			alert("test");
+			$(window).href = Uri.get_path() + "/" + get_current_url() + "#/" + $this.attr("es-href");
+		});
+	}
+	
 	finish() {
 		this.on_load();
+		this.generate_hooks();
 	}
 
 	parse_page() {
 		var reps = /\{\{(.*?)\}\}/g;
 		if (this.base_content != null) {
 			console.log("Parsing replaces");
-			//this.content = this.base_content.replace(reps, "<span id='es-val-$1'></span>");
-			this.content = this.base_content;
+			this.content = this.base_content.replace(reps, "<span id='es-val-$1'></span>");
+			//this.content = this.base_content;
 			this.render_page();
 		}
 	}
@@ -157,10 +166,10 @@ class Router {
 		} else {
 			route = this.get_route("/");
 			if (route != null && route != undefined) {
-				console.log("invalid route loading root");
+				console.log("invalid route loading root route('/')");
 				this.load_route(route);
 			} else {
-				throw "No route found exiting Router::do_route()";
+				throw "No root route('/') found exiting Router::do_route()";
 			}
 		}
 	}
