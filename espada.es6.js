@@ -95,11 +95,35 @@ class Page {
 	}
 	
 	generate_hooks() {
-		$("a").click(function() {
-			$this = $(this);
-			alert("test");
-			$(window).href = Uri.get_path() + "/" + get_current_url() + "#/" + $this.attr("es-href");
-		});
+		console.log("Generating hooks");
+		let $page = this;
+		setTimeout(function() {
+			$('a').each(function(i, e) {
+				let $this = $(this);
+				let href = $this.attr("esref");
+				$this.attr("href", Uri.get_base_url() + "#" + href);
+				if(href == Uri.get_path()) {
+					$this.addClass($this.attr("es-active"));
+				}else{
+					$this.removeClass($this.attr("es-active"));
+				}
+			});
+			
+			let actives = $("[es-active]");
+			
+			actives.each(function() {
+				let $parent = $(this);
+				$(this).find("a").each(function(i, e) {
+					let $this = $(this);
+					let href = $this.attr("esref");
+					if(href == Uri.get_path()) {
+						$parent.addClass($parent.attr("es-active"));
+					}else{
+						$parent.removeClass($parent.attr("es-active"));
+					}
+				});
+			});
+		},0 );
 	}
 	
 	finish() {
