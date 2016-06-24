@@ -144,6 +144,7 @@ class Page {
 	render_page() {
 		if (this.content != null) {
 			if (this.route.controller != undefined && this.route.controller != null) {
+				console.log(typeof this.route.controller == Controller);
 				this.controller = new Controller(this);
 				this.route.controller(this.controller);
 			}
