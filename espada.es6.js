@@ -231,7 +231,7 @@ class Uri {
 	static get_current_url() {
 		var uri = window.location.href;
 		
-		var reg  = /((\w)*\.(\w)*)/g;
+		var reg  = /((\w)*\.(php|html|py|jsp|htm|rb|xhtml))/g;
 		
 		uri = uri.replace(reg, "", uri);
 
@@ -278,6 +278,10 @@ class Application {
 	constructor(name, app_path) {
 		this.name = name;
 		this.path = app_path;
+		
+		console.log(Uri.get_current_url());
+		console.log(Uri.get_base_url());
+		console.log(Uri.get_path());
 
 		this.routes = new Router(this);
 
