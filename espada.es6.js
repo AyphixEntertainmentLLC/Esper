@@ -7,13 +7,15 @@ class Controller {
 
 class Request {
 	static load_file(params) {
+		jQuery.ajaxSetup({async:false});
 		var url = params.url;
 		var loaded = params.loaded;
 		console.log("loading file: " + url);
 		$.ajax({
 			url: url,
 			success: (html) => {
-				loaded(html);
+				jQuery.ajaxSetup({async:true});
+				loaded(html);				
 			}
 		}).
 		fail(function(xhr, code, message) {
@@ -36,6 +38,7 @@ class Page {
 		if (this.route != null && this.route != undefined) {
 			Request.load_file({
 				url: Uri.get_base_url() + this.app.path + "/" + this.route.view,
+				async: false,
 				loaded: (html) => {
 					this.base_content = html;
 					this.parse_page();
@@ -101,7 +104,10 @@ class Page {
 			$('a').each(function(i, e) {
 				let $this = $(this);
 				let href = $this.attr("esref");
-				$this.attr("href", Uri.get_base_url() + "#" + href);
+				if(href != null && href != undefined) {
+					$this.attr("href", Uri.get_base_url() + "#" + href);
+					console.log(href);
+				}
 				if(href == Uri.get_path()) {
 					$this.addClass($this.attr("es-active"));
 				}else{
@@ -123,7 +129,7 @@ class Page {
 					}
 				});
 			});
-		},0 );
+		}, 0);
 	}
 	
 	finish() {
@@ -231,7 +237,7 @@ class Uri {
 	static get_current_url() {
 		var uri = window.location.href;
 		
-		var reg  = /((\w)*\.(php|html|py|jsp|htm|rb|xhtml))/g;
+		var reg  = /((\w)*\.(php|html|py|jsp|htm|rb))/g;
 		
 		uri = uri.replace(reg, "", uri);
 
@@ -278,10 +284,6 @@ class Application {
 	constructor(name, app_path) {
 		this.name = name;
 		this.path = app_path;
-		
-		console.log(Uri.get_current_url());
-		console.log(Uri.get_base_url());
-		console.log(Uri.get_path());
 
 		this.routes = new Router(this);
 
