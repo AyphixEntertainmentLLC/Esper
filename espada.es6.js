@@ -7,13 +7,15 @@ class Controller {
 
 class Request {
 	static load_file(params) {
+		jQuery.ajaxSetup({async:false});
 		var url = params.url;
 		var loaded = params.loaded;
 		console.log("loading file: " + url);
 		$.ajax({
 			url: url,
 			success: (html) => {
-				loaded(html);
+				jQuery.ajaxSetup({async:true});
+				loaded(html);				
 			}
 		}).
 		fail(function(xhr, code, message) {
@@ -36,6 +38,7 @@ class Page {
 		if (this.route != null && this.route != undefined) {
 			Request.load_file({
 				url: Uri.get_base_url() + this.app.path + "/" + this.route.view,
+				async: false,
 				loaded: (html) => {
 					this.base_content = html;
 					this.parse_page();
@@ -71,25 +74,75 @@ class Page {
 			
 			var src = null;
 			
-			switch(type.toLowerCase()) {
+			switch(type.toLowerCase().replace(" ", "")) {
+				case "python":
+				case "ruby":
+				case "jscript":
+				case "javascript":
+				case "js":
 				case "script":
 					src = $this.attr("src");
-					$this.html("<script src='"+src+"'></script>");
+					$this.replaceWith("<script src='"+src+"'></script>");
+					break;
+				case "css1":
+				case "css2":
+				case "css3":
+				case "stylesheet":
+				case "style":
+				case "css":
+					src = $this.attr("src");
+					$this.replaceWith("<link rel='stylesheet' href='"+src+"'>");
 					break;
 			}
 		});
 	}
 	
+	generate_hooks() {
+		console.log("Generating hooks");
+		let $page = this;
+		setTimeout(function() {
+			$('a').each(function(i, e) {
+				let $this = $(this);
+				let href = $this.attr("esref");
+				if(href != null && href != undefined) {
+					$this.attr("href", Uri.get_base_url() + "#" + href);
+					console.log(href);
+				}
+				if(href == Uri.get_path()) {
+					$this.addClass($this.attr("es-active"));
+				}else{
+					$this.removeClass($this.attr("es-active"));
+				}
+			});
+			
+			let actives = $("[es-active]");
+			
+			actives.each(function() {
+				let $parent = $(this);
+				$(this).find("a").each(function(i, e) {
+					let $this = $(this);
+					let href = $this.attr("esref");
+					if(href == Uri.get_path()) {
+						$parent.addClass($parent.attr("es-active"));
+					}else{
+						$parent.removeClass($parent.attr("es-active"));
+					}
+				});
+			});
+		}, 0);
+	}
+	
 	finish() {
 		this.on_load();
+		this.generate_hooks();
 	}
 
 	parse_page() {
 		var reps = /\{\{(.*?)\}\}/g;
 		if (this.base_content != null) {
 			console.log("Parsing replaces");
-			//this.content = this.base_content.replace(reps, "<span id='es-val-$1'></span>");
-			this.content = this.base_content;
+			this.content = this.base_content.replace(reps, "<span id='es-val-$1'></span>");
+			//this.content = this.base_content;
 			this.render_page();
 		}
 	}
@@ -97,6 +150,7 @@ class Page {
 	render_page() {
 		if (this.content != null) {
 			if (this.route.controller != undefined && this.route.controller != null) {
+				console.log(typeof this.route.controller == Controller);
 				this.controller = new Controller(this);
 				this.route.controller(this.controller);
 			}
@@ -116,7 +170,6 @@ class Router {
 		this.states = [];
 		this.app = app;
 		this.page = null;
-		this.route_fail = null;
 	}
 
 	set_routes(routes) {
@@ -127,11 +180,7 @@ class Router {
 		var app_states = this.states;
 		$.each(routes, function(index, route) {
 			if (route.url != undefined) {
-				if(route.is404 != undefined) {
-					if(route.is404) {
-						this.route_fail = route;
-					}
-				}
+				console.log(route.url);
 				app_states[route.url] = route;
 			} else {
 				throw "Route.url was not defined Router::set_routes()";
@@ -146,16 +195,12 @@ class Router {
 			console.log("This was a valid route: " + Uri.get_path() + ", Route: " + route.url);
 			this.load_route(route);
 		} else {
-			if(this.route_fail != null) {
-				this.load_route(this.route_fail);
-			}else{
-				route = this.get_route("/");
-				if (route != null && route != undefined) {
-					console.log("invalid route loading root");
-					this.load_route(route);
-				} else {
-					throw "No route found exiting Router::do_route()";
-				}
+			route = this.get_route("/");
+			if (route != null && route != undefined) {
+				console.log("invalid route loading root route('/')");
+				this.load_route(route);
+			} else {
+				throw "No root route('/') found exiting Router::do_route()";
 			}
 		}
 	}
@@ -192,7 +237,7 @@ class Uri {
 	static get_current_url() {
 		var uri = window.location.href;
 		
-		var reg  = /((\w)*\.(\w)*)/g;
+		var reg  = /((\w)*\.(php|html|py|jsp|htm|rb))/g;
 		
 		uri = uri.replace(reg, "", uri);
 

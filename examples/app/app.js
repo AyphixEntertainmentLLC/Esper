@@ -13,6 +13,11 @@ var routes = [
 		url: "/",
 		controller: main_controller,
 		view: "views/main.html"
+	},
+	{
+		url: "/includes",
+		controller: null,
+		view: "views/includes.html"
 	}
 ];
 

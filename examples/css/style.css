@@ -1,0 +1,19 @@
+h1 {
+    text-align:center;
+    padding-bottom:10px;
+    border-bottom:thin solid lightgrey;
+}
+
+h2 {
+    display:inline-block;
+    padding-bottom:5px;
+    border-bottom:thin solid lightgrey;
+}
+
+p {
+    padding:10px;
+    border-radius:5px;
+    background:lightgrey;
+    box-sizing:border-box;
+    margin:10px;
+}

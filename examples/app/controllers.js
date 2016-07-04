@@ -3,7 +3,7 @@
 
 // EM3 Style Controller 
 function main_controller($this) {
-	
+	//alert($this.route.view);
 }
 
 /*
