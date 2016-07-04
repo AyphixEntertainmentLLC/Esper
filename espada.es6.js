@@ -3,6 +3,14 @@ class Controller {
 		this.route = page.route;
 		this.app = page.app;
 	}
+	
+	url() {
+		return Uri.url();
+	}
+	
+	request(params) {
+		Request.post(params);
+	}
 }
 
 class Request {
@@ -19,7 +27,62 @@ class Request {
 			}
 		}).
 		fail(function(xhr, code, message) {
-			throw "Unable to load request! Error Code: " + code + ", Message: " + message;
+			throw Error("Unable to load request! Error Code: " + code + ", Message: " + message);
+		});
+	}
+	
+	static post(params) {
+		var url = "";
+		if(params.url     != undefined) {
+			url = params.url;
+		}
+		
+		var method = "get";
+		if(params.method  != undefined) {
+			method = params.method;
+		}
+		
+		var data = "";
+		if(params.data    != undefined) {
+			data = $.param(params.data);
+		}
+		
+		var success = function() { throw Error("Request returned a success but no success callback was set."); };		
+		var fail    = function() { throw Error("Request returned a failure but no success callback was set."); };
+		var error   = function() { throw Error("Request returned an error but no error callback was set.");    };
+		
+		if(params.success != undefined) {
+			success = params.success;
+		}
+		
+		if(params.fail    != undefined) {
+			fail = params.fail;
+		}
+		
+		if(params.error   != undefined) {
+			error = params.error;
+		}
+		
+		console.log("Ajax Call: " + url);
+		
+		$.ajax({
+			url: url,
+			method: method,
+			data: data,
+			success: (res) => {
+				if(res != null && res != undefined) {
+					if(res.status) {
+						success(res);
+					}else{
+						fail(res);
+					}
+				}else {
+					error("");
+				}
+			},
+			error: (response) => {
+				fail(response);
+			}
 		});
 	}
 }
@@ -141,7 +204,7 @@ class Page {
 		var reps = /\{\{(.*?)\}\}/g;
 		if (this.base_content != null) {
 			console.log("Parsing replaces");
-			this.content = this.base_content.replace(reps, "<span id='es-val-$1'></span>");
+			this.content = this.base_content.replace(reps, eval("$1"));
 			//this.content = this.base_content;
 			this.render_page();
 		}
@@ -244,15 +307,26 @@ class Uri {
 		return uri;
 	}
 	
+	static url() {
+		return Uri.get_base_url();
+	}
+	
 	static get_base_url() {
 		var uri = Uri.get_current_url();
 		if (uri.substring(uri.length - 1) == "/") {
 			uri = uri.substring(0, uri.length - 1);
 		}
+		
+		var ind = uri.indexOf("?");
+		if(ind > -1) {
+			uri = uri.substring(0, ind);
+		}	
+		
 		var index = uri.indexOf("#");
 		if (uri.substring(uri.length - 1) != "/") {
 			uri += "/";
 		}
+		
 		if (index > -1) {
 			return uri.substring(0, uri.indexOf("#"));
 		} else {
