@@ -87,7 +87,7 @@ var Page = function () {
 			switch (type.toLowerCase()) {
 				case "script":
 					src = $this.attr("src");
-					$this.replaceWith("<script src='" + src + "'></script>");
+					$this.html("<script src='" + src + "'></script>");
 					break;
 			}
 		});
@@ -133,6 +133,7 @@ var Router = function () {
 		this.states = [];
 		this.app = app;
 		this.page = null;
+		this.route_fail = null;
 	}
 
 	Router.prototype.set_routes = function set_routes(routes) {
@@ -143,7 +144,11 @@ var Router = function () {
 		var app_states = this.states;
 		$.each(routes, function (index, route) {
 			if (route.url != undefined) {
-				console.log(route.url);
+				if (route.is404 != undefined) {
+					if (route.is404) {
+						this.route_fail = route;
+					}
+				}
 				app_states[route.url] = route;
 			} else {
 				throw "Route.url was not defined Router::set_routes()";
@@ -158,12 +163,16 @@ var Router = function () {
 			console.log("This was a valid route: " + Uri.get_path() + ", Route: " + route.url);
 			this.load_route(route);
 		} else {
-			route = this.get_route("/");
-			if (route != null && route != undefined) {
-				console.log("invalid route loading root");
-				this.load_route(route);
+			if (this.route_fail != null) {
+				this.load_route(this.route_fail);
 			} else {
-				throw "No route found exiting Router::do_route()";
+				route = this.get_route("/");
+				if (route != null && route != undefined) {
+					console.log("invalid route loading root");
+					this.load_route(route);
+				} else {
+					throw "No route found exiting Router::do_route()";
+				}
 			}
 		}
 	};
