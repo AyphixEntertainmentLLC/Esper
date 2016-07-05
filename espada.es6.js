@@ -201,11 +201,21 @@ class Page {
 	}
 
 	parse_page() {
-		var reps = /\{\{(.*?)\}\}/g;
+		var reps = /(\{\{(.*?)\}\})/g;
 		if (this.base_content != null) {
 			console.log("Parsing replaces");
-			this.content = this.base_content.replace(reps, eval("$1"));
-			//this.content = this.base_content;
+			var m;
+			while((m = reps.exec(this.base_content)) !== null) {				
+				try {
+					var rep = eval(m[1]);
+					this.base_content = this.base_content.replace(m[0], rep);
+				}catch(err) {
+					this.base_content = this.base_content.replace(m[0], "");
+				}
+			}
+			//this.content = this.base_content.replace(reps, "$1");
+			this.content = this.base_content;
+			
 			this.render_page();
 		}
 	}
