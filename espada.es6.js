@@ -3,6 +3,18 @@ class Controller {
 		this.route = page.route;
 		this.app = page.app;
 	}
+	
+	url() {
+		return Uri.url();
+	}
+	
+	compile(code) {
+		return eval(code);
+	}
+	
+	request(params) {
+		Request.post(params);
+	}
 }
 
 class Request {
@@ -19,7 +31,62 @@ class Request {
 			}
 		}).
 		fail(function(xhr, code, message) {
-			throw "Unable to load request! Error Code: " + code + ", Message: " + message;
+			throw Error("Unable to load request! Error Code: " + code + ", Message: " + message);
+		});
+	}
+	
+	static post(params) {
+		var url = "";
+		if(params.url     != undefined) {
+			url = params.url;
+		}
+		
+		var method = "get";
+		if(params.method  != undefined) {
+			method = params.method;
+		}
+		
+		var data = "";
+		if(params.data    != undefined) {
+			data = $.param(params.data);
+		}
+		
+		var success = function() { throw Error("Request returned a success but no success callback was set."); };		
+		var fail    = function() { throw Error("Request returned a failure but no success callback was set."); };
+		var error   = function() { throw Error("Request returned an error but no error callback was set.");    };
+		
+		if(params.success != undefined) {
+			success = params.success;
+		}
+		
+		if(params.fail    != undefined) {
+			fail = params.fail;
+		}
+		
+		if(params.error   != undefined) {
+			error = params.error;
+		}
+		
+		console.log("Ajax Call: " + url);
+		
+		$.ajax({
+			url: url,
+			method: method,
+			data: data,
+			success: (res) => {
+				if(res != null && res != undefined) {
+					if(res.status) {
+						success(res);
+					}else{
+						fail(res);
+					}
+				}else {
+					error("");
+				}
+			},
+			error: (response) => {
+				fail(response);
+			}
 		});
 	}
 }
@@ -41,7 +108,7 @@ class Page {
 				async: false,
 				loaded: (html) => {
 					this.base_content = html;
-					this.parse_page();
+					this.render_page();
 				}
 			});
 		} else {
@@ -133,30 +200,46 @@ class Page {
 	}
 	
 	finish() {
-		this.on_load();
 		this.generate_hooks();
+		this.parse_page();		
+		this.on_load();
+	}
+	
+	get_html() {
+	    var r = document.documentElement.innerHTML, t = document.documentElement.attributes, i = 0, l = '',
+	        d = '<!DOCTYPE ' + document.doctype.name + (document.doctype.publicId ? ' PUBLIC "' + document.doctype.publicId + '"' : '') + (!document.doctype.publicId && document.doctype.systemId ? ' SYSTEM' : '') + (document.doctype.systemId ? ' "' + document.doctype.systemId + '"' : '') + '>';
+	    for (; i < t.length; i += 1) l += ' ' + t[i].name + '="' + t[i].value + '"';
+	    return d+'\n<html' + l + '>' + r + '</html>';
 	}
 
 	parse_page() {
-		var reps = /\{\{(.*?)\}\}/g;
-		if (this.base_content != null) {
-			console.log("Parsing replaces");
-			this.content = this.base_content.replace(reps, "<span id='es-val-$1'></span>");
-			//this.content = this.base_content;
-			this.render_page();
+		var reps = /(\{\{(.*?)\}\})/g; 
+		console.log("Parsing replaces");
+		var doc = $("html");
+		var cont = this.get_html();
+		var m;
+		while((m = reps.exec(cont)) !== null) {			
+			//alert(m);	
+			try {
+				var rep = this.controller.compile(m[1]);
+				cont = cont.replace(m[0], rep);
+			}catch(err) {
+				cont = cont.replace(m[0], "");
+			}
 		}
+		document.documentElement.innerHTML = cont;
 	}
 
 	render_page() {
 		if (this.content != null) {
+			this.controller = new Controller(this);
 			if (this.route.controller != undefined && this.route.controller != null) {
 				console.log(typeof this.route.controller == Controller);
-				this.controller = new Controller(this);
 				this.route.controller(this.controller);
 			}
 			console.log("Setting page html");
-			$("view").html(this.content);
-			//console.log(this.content);
+			//this.content = this.base_content;
+			$("view").html(this.base_content);
 			console.log("Done setting page html");
 			this.includes();
 		} else {
@@ -244,15 +327,26 @@ class Uri {
 		return uri;
 	}
 	
+	static url() {
+		return Uri.get_base_url();
+	}
+	
 	static get_base_url() {
 		var uri = Uri.get_current_url();
 		if (uri.substring(uri.length - 1) == "/") {
 			uri = uri.substring(0, uri.length - 1);
 		}
+		
+		var ind = uri.indexOf("?");
+		if(ind > -1) {
+			uri = uri.substring(0, ind);
+		}	
+		
 		var index = uri.indexOf("#");
 		if (uri.substring(uri.length - 1) != "/") {
 			uri += "/";
 		}
+		
 		if (index > -1) {
 			return uri.substring(0, uri.indexOf("#"));
 		} else {
