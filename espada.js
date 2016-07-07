@@ -1,5 +1,3 @@
-"use strict";
-
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -22,7 +20,15 @@ var Controller = function () {
 	}, {
 		key: "compile",
 		value: function compile(code) {
-			return eval(code);
+			return this.evalInContext(code, this);
+		}
+	}, {
+		key: "evalInContext",
+		value: function evalInContext(js, context) {
+			//# Return the results of the in-line anonymous function we .call with the passed context
+			return function () {
+				return eval(js);
+			}.call(context);
 		}
 	}, {
 		key: "request",
@@ -267,13 +273,8 @@ var Page = function () {
 			var cont = this.get_html();
 			var m;
 			while ((m = reps.exec(cont)) !== null) {
-				//alert(m);	
-				try {
-					var rep = this.controller.compile(m[1]);
-					cont = cont.replace(m[0], rep);
-				} catch (err) {
-					cont = cont.replace(m[0], "");
-				}
+				var rep = this.controller.compile(m[1]);
+				cont = cont.replace(m[0], rep);
 			}
 			document.documentElement.innerHTML = cont;
 		}

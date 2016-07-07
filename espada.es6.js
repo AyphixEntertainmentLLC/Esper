@@ -9,7 +9,12 @@ class Controller {
 	}
 	
 	compile(code) {
-		return eval(code);
+		return this.evalInContext(code, this);
+	}
+	
+	evalInContext(js, context) {
+	    //# Return the results of the in-line anonymous function we .call with the passed context
+	    return function() { return eval(js); }.call(context);
 	}
 	
 	request(params) {
@@ -218,14 +223,9 @@ class Page {
 		var doc = $("html");
 		var cont = this.get_html();
 		var m;
-		while((m = reps.exec(cont)) !== null) {			
-			//alert(m);	
-			try {
+		while((m = reps.exec(cont)) !== null) {
 				var rep = this.controller.compile(m[1]);
 				cont = cont.replace(m[0], rep);
-			}catch(err) {
-				cont = cont.replace(m[0], "");
-			}
 		}
 		document.documentElement.innerHTML = cont;
 	}
