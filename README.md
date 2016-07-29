@@ -1,3 +1,5 @@
+## A complete overhaul of espada is coming! Call it Espada 1.5
+
 # Project espada™
 
 ## What is Project Espada™?
