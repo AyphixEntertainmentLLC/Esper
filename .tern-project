@@ -1,0 +1,47 @@
+{
+  "ecmaVersion": 6,
+  "parserOptions": {
+    "syntaxErrors": 2,
+    "reservedWordsInPropNames": 0,
+    "returnOutsideOfFunction": 1,
+    "importExportOutsideOfTopBlock": 2,
+    "hashBang": 0,
+    "pebbleSyntax": 2
+  },
+  "plugins": {
+    "guess-types": {
+      
+    },
+    "jshint": {
+      "config": {
+        "boss": true,
+        "debug": true,
+        "elision": true,
+        "eqnull": true,
+        "esnext": true,
+        "evil": true,
+        "expr": true,
+        "lastsemic": true,
+        "laxbreak": true,
+        "laxcomma": true,
+        "loopfunc": true,
+        "moz": true,
+        "multistr": true,
+        "noyield": true,
+        "plusplus": true,
+        "proto": true,
+        "scripturl": true,
+        "strict": true,
+        "sub": true,
+        "supernew": true,
+        "validthis": true,
+        "withstmt": true,
+        "jquery": true
+      }
+    }
+  },
+  "libs": [
+    "ecma5",
+    "browser"
+  ]
+}
