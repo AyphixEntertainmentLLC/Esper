@@ -67,7 +67,7 @@ class Uri {
 	 */
 	static get_base_url() {
 		var url = Uri.get_url();
-		url = url.replace(/((\w)*(\.((html|htm)|php|css|js|less|scss|xhtml|rb|py|jsp)).*)/g, "");
+		url = url.replace(/((\w)*(\.((html|htm)|php|css|js|less|scss|xhtml|rb|py|jsp))(.*)*)/g, "");
 		return url;
 	}
 	/**
@@ -247,6 +247,7 @@ class Application {
 		let $this = this;
 		
 		$(window).on('hashchange', function() {
+			console.log("route change");
 			$this.router.handle();
 		});
 	}
@@ -256,6 +257,7 @@ class Application {
 	}
 	
 	run(rootScope) {
+		//console.log(Uri.get_base_url());
 		rootScope(this.$rootScope);
 		this.router.handle();
 	}
@@ -293,6 +295,7 @@ class Page {
 	
 	run() {
 		if($_.nullOrUndef(this.$scope)) {
+			console.log("creating controller");
 			this.$scope(this.controller);
 		}
 		this.$apply();
@@ -300,6 +303,7 @@ class Page {
 	
 	$apply(func) {
 		//this.eval();
+		console.log("Applying changes");
 		this.include();
 		if ($_.nullOrUndef(func)) {
 			func();
@@ -307,14 +311,14 @@ class Page {
 	}
 	
 	include() {
-		console.log($("include").length);
-		
+		let $route = this.$route;
+		console.log("changing DOM");
 		$.each($(".view"), function(i,e){
 			let $this = $(this);
 			Request.load_file({
-				url: Uri.get_url() + "app/" + $(this).attr("src"),
+				url: Uri.get_base_url() + "app/views/" + $route.view,
 				loaded: function(data) {
-					$this.replaceWith(data);
+					$this.after("<!--View:" + i + "-->" + data + "<!--/View:" + i + "-->");
 				}
 			});
 		});
@@ -322,12 +326,21 @@ class Page {
 		$.each($("include"), function(i,e){
 			let $this = $(this);
 			Request.load_file({
-				url: Uri.get_url() + "app/" + $(this).attr("src"),
+				url: Uri.get_base_url() + "app/" + $(this).attr("src"),
 				loaded: function(data) {
 					$this.replaceWith(data);
 				}
 			});
 		});
+	}
+	
+	exit() {
+		console.log("Cleaning up DOM and exiting page");
+		this.cleanup();
+	}
+	
+	cleanup() {
+		$("body").html($("body").html().replace(/(<!--view:\s*\d*\s*\-\->[\s\S]*?<!--\/view:\s*\d*\s*-->)/igm, ""));
 	}
 	
 	eval(js) {
@@ -357,13 +370,13 @@ class Router {
 	constructor($rootScope) {
 		this.$rootScope = $rootScope;
 		this.routes = new RouteMap();
-		this.page = null;
+		this.current_route = null;
 	}
 	
 	setRoutes(rarray) {
 		let $this = this;
 		$.each(rarray, function(i, e) {
-			let route = new Route($this.$rootScope, e.controller, e.title, e.url);
+			let route = new Route($this.$rootScope, e);
 			if(!$this.routes.add(i, e.url, route)) {
 				throw new Error("The route: " + i + "(" + e.url + ") already exists");
 			}
@@ -372,10 +385,16 @@ class Router {
 	
 	handle() {
 		let action = Uri.get_action();
+		console.log("Action is: " + action);
 		let route = this.getRoute(action);
+		console.log("Route is: " + route);
 		if($_.nullOrUndef(route)) {
 			console.log("Route success");
+			if($_.nullOrUndef(this.current_route)) {
+				this.current_route.exit();
+			}
 			route.run();
+			this.current_route = route;
 		}else{
 			throw new Error("No route for action(" + action + ") found!");
 		}
@@ -387,12 +406,7 @@ class Router {
 			rte = this.routes.get("404");
 			
 			if(!$_.nullOrUndef(rte)) {
-				rte = this.routes.get("/");
-				if($_.nullOrUndef(rte)) {
-					return rte;
-				}else{
-					throw new Error("No routes to go to!");
-				}
+				throw new Error("No routes to go to!");
 			}else{
 				return rte;
 			}
@@ -404,6 +418,14 @@ class Router {
 		}
 	}
 }
+
+class View {
+	contructor() {
+		this.id = ++View.ID;
+	}
+}
+
+View.ID = 0;
 
 /**
  * -----------------------------------------------------------------------------
@@ -417,14 +439,21 @@ class Router {
  * @author Jïn Muhjo
  */
 class Route {
-	constructor($rootScope, controller, name, url) {
-		this.name = name;
-		this.url = url;
-		this.controller = controller;
+	constructor($rootScope, route) {
+		this.name = route.name;
+		this.url = route.url;
+		this.controller = route.controller;
+		this.view = route.view;
+		this.parent = route.parent;
 		this.page = new Page($rootScope, this);
 	}
 	
 	run() {
+		console.log("Running route");
 		this.page.run();
+	}
+	
+	exit() {
+		this.page.exit();
 	}
 }
