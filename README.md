@@ -23,6 +23,6 @@ Look at similar libraries and compare them to Esper, thats why.
 
 ## I want to try it but I dont want to download the whole package
 Thats cool, I've setup a simple CDN on my site with Esper on it, I update it as I finish new features so don't worry about it breaking.  
-`http://www.ayphix.com/cdn/esper.es6.js`  
+`http://www.ayphix.com/cdn/esper_es6.js`  
 You COULD also try the working version but that version may break as I work on it.
-`http://www.ayphix.com/cdn/dev/esper.es6.js`
+`http://www.ayphix.com/cdn/devel/esper_es6.js`
